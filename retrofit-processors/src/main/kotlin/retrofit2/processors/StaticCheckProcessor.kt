@@ -1,4 +1,4 @@
-package com.squareup.retrofit2
+package retrofit2.processors
 
 import com.google.auto.service.AutoService
 import javax.annotation.processing.*

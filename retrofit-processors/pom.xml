@@ -5,12 +5,13 @@
     <artifactId>parent</artifactId>
     <groupId>com.squareup.retrofit2</groupId>
     <version>2.4.1-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>retrofit-processors</artifactId>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
 
   <name>Processors</name>
 
