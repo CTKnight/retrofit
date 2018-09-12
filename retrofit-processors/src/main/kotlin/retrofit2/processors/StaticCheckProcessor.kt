@@ -30,7 +30,7 @@ class StaticCheckProcessor() : AbstractProcessor() {
         return result
     }
 
-    override fun getSupportedAnnotationTypes(): Set<String> = setOf()
+    override fun getSupportedAnnotationTypes(): Set<String> = setOf(RetrofitService::class.java.canonicalName)
 
     override fun getSupportedSourceVersion(): SourceVersion = SourceVersion.latestSupported()
 
