@@ -1,20 +1,22 @@
 package retrofit2.processors
 
 import com.google.auto.service.AutoService
+import retrofit2.Retrofit
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
+import javax.lang.model.element.ElementKind
 import javax.lang.model.element.TypeElement
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 import javax.tools.Diagnostic
 
 @AutoService(Processor::class)
-class StaticCheckProcessor() : AbstractProcessor() {
-    private var typeUtils: Types? = null
-    private var elementUtils: Elements? = null
-    private var filer: Filer? = null
-    private var messager: Messager? = null
+class StaticCheckProcessor : AbstractProcessor() {
+    private lateinit var typeUtils: Types
+    private lateinit var elementUtils: Elements
+    private lateinit var filer: Filer
+    private lateinit var messager: Messager
 
     @Synchronized
     override fun init(env: ProcessingEnvironment) {
@@ -26,8 +28,12 @@ class StaticCheckProcessor() : AbstractProcessor() {
     }
 
     override fun process(annoations: Set<TypeElement>, env: RoundEnvironment): Boolean {
-        var result = false
-        return result
+        env.rootElements.forEach {
+            if (it.kind != ElementKind.INTERFACE) {
+                warning(it,"@RetrofitService is not annotated on an Interface, skipped")
+            }
+        }
+        return true
     }
 
     override fun getSupportedAnnotationTypes(): Set<String> = setOf(RetrofitService::class.java.canonicalName)
@@ -35,6 +41,10 @@ class StaticCheckProcessor() : AbstractProcessor() {
     override fun getSupportedSourceVersion(): SourceVersion = SourceVersion.latestSupported()
 
     private fun error(e: Element, msg: String) {
-        messager!!.printMessage(Diagnostic.Kind.ERROR, msg, e)
+        messager.printMessage(Diagnostic.Kind.ERROR, msg, e)
+    }
+
+    private fun warning(e: Element, msg: String) {
+        messager.printMessage(Diagnostic.Kind.WARNING, msg, e)
     }
 }
