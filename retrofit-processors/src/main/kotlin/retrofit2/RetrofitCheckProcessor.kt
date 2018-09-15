@@ -1,6 +1,8 @@
-package retrofit2.processors
+package retrofit2
 
 import com.google.auto.service.AutoService
+import retrofit2.processors.ErrorMessage
+import retrofit2.processors.RetrofitService
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.Filer
 import javax.annotation.processing.Messager
@@ -10,13 +12,14 @@ import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.ElementKind
+import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 import javax.tools.Diagnostic
 
 @AutoService(Processor::class)
-class StaticCheckProcessor : AbstractProcessor() {
+class RetrofitCheckProcessor : AbstractProcessor() {
   private lateinit var typeUtils: Types
   private lateinit var elementUtils: Elements
   private lateinit var filer: Filer
@@ -32,10 +35,13 @@ class StaticCheckProcessor : AbstractProcessor() {
   }
 
   override fun process(annoations: Set<TypeElement>, env: RoundEnvironment): Boolean {
-    env.rootElements.forEach {
-      if (it.kind != ElementKind.INTERFACE) {
-        warning(it, "@RetrofitService is not annotated on an Interface, skipped")
+    env.getElementsAnnotatedWith(RetrofitService::class.java).forEach { annotated ->
+      if (annotated !is TypeElement) {
+        warning(annotated, ErrorMessage.NOT_TYPE_ELEMENT)
+        return@forEach
       }
+
+      validateInterface(annotated)
     }
     return true
   }
@@ -51,5 +57,26 @@ class StaticCheckProcessor : AbstractProcessor() {
 
   private fun warning(e: Element, msg: String) {
     messager.printMessage(Diagnostic.Kind.WARNING, msg, e)
+  }
+
+  private fun validateInterface(annotated: TypeElement) {
+    if (annotated.kind != ElementKind.INTERFACE) {
+      error(annotated, ErrorMessage.INVALID_TYPE)
+    }
+
+    if (!annotated.interfaces.isEmpty()) {
+      error(annotated, ErrorMessage.TOO_MUCH_INTERFACE)
+    }
+
+    val methods = annotated
+        .enclosedElements
+        .mapNotNull { element -> element as? ExecutableElement }
+        .filter { element -> !element.isDefault }
+
+    methods.forEach { validateMethod(it) }
+  }
+
+  private fun validateMethod(element: ExecutableElement) {
+    val returnType = element.returnType
   }
 }
