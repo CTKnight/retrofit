@@ -84,7 +84,7 @@ class RetrofitCheckProcessor : AbstractProcessor() {
       }
       is WildcardTypeName -> {
         processingEnvironment.error(element,
-            "${ErrorMessage.METHOD_RETURN_UNRESOLVED}: $returnTypeName")
+            ErrorMessage.METHOD_RETURN_UNRESOLVED)
       }
       is ArrayTypeName -> {
         validReturnType(returnTypeName.componentType, element)
