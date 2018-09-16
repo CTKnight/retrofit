@@ -13,16 +13,17 @@ class BaseTest {
         compiler()
             .compile(JavaFileObjects.forSourceLines(
                 "retrofit2.processors.SampleService",
-                """
+          """
                 package retrofit2.processors;
 
-                import retrofit2.http.HEAD;
+                import retrofit2.Call;
+                import retrofit2.http.GET;
 
                 @RetrofitService
                 public interface SampleService {
-                  @HEAD("/")
-                  public void sampleMethod();
+                  @GET("/") Call<Void> getVoid();
                 }
+
                 """))
 
     assertEquals(compilation.status(), Compilation.Status.SUCCESS)

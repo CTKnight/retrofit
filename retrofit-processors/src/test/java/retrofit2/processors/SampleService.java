@@ -1,9 +1,9 @@
 package retrofit2.processors;
 
-import retrofit2.http.HEAD;
+import retrofit2.Call;
+import retrofit2.http.GET;
 
 @RetrofitService
 public interface SampleService {
-  @HEAD("/")
-  void sampleMethod();
+  @GET("/") Call<Void> getVoid();
 }
