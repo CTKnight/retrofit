@@ -14,7 +14,7 @@ with only an extra annotation `@RetrofitService`
 
 The interface marked by `@RetrofitService` will be checked by annotation processor to
 avoid some issues like a method is marked by `@GET` and `@POST` at the same time or 
-a method marked by `@HEAD` has any return type other than `void`.
+a method has a return type of `void`.
 
 ## Plan
 
@@ -43,7 +43,7 @@ a method marked by `@HEAD` has any return type other than `void`.
     package retrofit2.generated;
     public class YourInterfaceService {
       @AnnotationsNotInRetrofit
-      Observable<YourModel> sample(@AnnotationsNotInRetrofit2 String param1) {
+      public Observable<YourModel> sample(@AnnotationsNotInRetrofit String param1) {
         // generated code
       }
       public static YourInterface build(Retrofit retrofit) {
