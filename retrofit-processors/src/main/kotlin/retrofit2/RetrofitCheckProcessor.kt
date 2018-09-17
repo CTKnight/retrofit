@@ -1,11 +1,23 @@
 package retrofit2
 
+import com.google.auto.common.MoreElements
 import com.google.auto.service.AutoService
 import com.squareup.javapoet.ArrayTypeName
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeVariableName
 import com.squareup.javapoet.WildcardTypeName
+import retrofit2.http.DELETE
+import retrofit2.http.FormUrlEncoded
+import retrofit2.http.GET
+import retrofit2.http.HEAD
+import retrofit2.http.HTTP
+import retrofit2.http.Headers
+import retrofit2.http.Multipart
+import retrofit2.http.OPTIONS
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.processors.ErrorMessage
 import retrofit2.processors.RetrofitService
 import retrofit2.processors.error
@@ -15,6 +27,7 @@ import javax.annotation.processing.ProcessingEnvironment
 import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
+import javax.lang.model.element.AnnotationMirror
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
@@ -71,6 +84,37 @@ class RetrofitCheckProcessor : AbstractProcessor() {
     val returnType = element.returnType
     val returnTypeName = TypeName.get(returnType)
     validReturnType(returnTypeName, element)
+    validateMethodAnnotations(element)
+  }
+
+  private fun validateMethodAnnotations(element: ExecutableElement) {
+    val annotations = element.annotationMirrors
+    annotations.forEach {
+      val typeName = TypeName.get(it.annotationType)
+      when (typeName) {
+        TypeName.get(DELETE::class.java),
+        TypeName.get(GET::class.java),
+        TypeName.get(HEAD::class.java),
+        TypeName.get(PATCH::class.java),
+        TypeName.get(POST::class.java),
+        TypeName.get(PUT::class.java),
+        TypeName.get(OPTIONS::class.java) -> {
+
+        }
+        TypeName.get(HTTP::class.java) -> {
+
+        }
+        TypeName.get(Headers::class.java) -> {
+
+        }
+        TypeName.get(Multipart::class.java) -> {
+
+        }
+        TypeName.get(FormUrlEncoded::class.java) -> {
+
+        }
+      }
+    }
   }
 
   private fun validReturnType(returnTypeName: TypeName, element: ExecutableElement) {
@@ -93,5 +137,6 @@ class RetrofitCheckProcessor : AbstractProcessor() {
         returnTypeName.typeArguments.forEach { validReturnType(it, element) }
       }
     }
+    // TODO: use retrofit instance to check return types with call adapters and converters
   }
 }

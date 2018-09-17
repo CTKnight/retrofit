@@ -6,7 +6,6 @@ import org.junit.Test
 import java.util.Locale
 import javax.tools.JavaFileObject
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class TargetTypeTest {
 

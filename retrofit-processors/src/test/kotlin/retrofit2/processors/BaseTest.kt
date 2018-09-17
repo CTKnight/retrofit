@@ -13,7 +13,7 @@ class BaseTest {
         compiler()
             .compile(JavaFileObjects.forSourceLines(
                 "retrofit2.processors.SampleService",
-          """
+                """
                 package retrofit2.processors;
 
                 import retrofit2.Call;

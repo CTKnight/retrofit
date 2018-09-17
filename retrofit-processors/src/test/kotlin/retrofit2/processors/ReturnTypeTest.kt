@@ -26,7 +26,8 @@ class ReturnTypeTest {
 
     assertEquals(Compilation.Status.FAILURE, compilation.status())
     assertEquals(1, compilation.errors().size)
-    assertEquals("${ErrorMessage.METHOD_RETURN_UNRESOLVED}: T", compilation.errors().firstOrNull()?.getMessage())
+    assertEquals("${ErrorMessage.METHOD_RETURN_UNRESOLVED}: T",
+        compilation.errors().firstOrNull()?.getMessage())
   }
 
   @Test
@@ -50,7 +51,8 @@ class ReturnTypeTest {
 
     assertEquals(Compilation.Status.FAILURE, compilation.status())
     assertEquals(1, compilation.errors().size)
-    assertEquals("${ErrorMessage.METHOD_RETURN_UNRESOLVED}: T", compilation.errors().firstOrNull()?.getMessage())
+    assertEquals("${ErrorMessage.METHOD_RETURN_UNRESOLVED}: T",
+        compilation.errors().firstOrNull()?.getMessage())
   }
 
   @Test
@@ -73,7 +75,8 @@ class ReturnTypeTest {
 
     assertEquals(Compilation.Status.FAILURE, compilation.status())
     assertEquals(1, compilation.errors().size)
-    assertEquals(ErrorMessage.METHOD_RETURN_UNRESOLVED, compilation.errors().firstOrNull()?.getMessage())
+    assertEquals(ErrorMessage.METHOD_RETURN_UNRESOLVED,
+        compilation.errors().firstOrNull()?.getMessage())
   }
 
   @Test
@@ -97,7 +100,8 @@ class ReturnTypeTest {
 
     assertEquals(Compilation.Status.FAILURE, compilation.status())
     assertEquals(1, compilation.errors().size)
-    assertEquals(ErrorMessage.METHOD_RETURN_UNRESOLVED, compilation.errors().firstOrNull()?.getMessage())
+    assertEquals(ErrorMessage.METHOD_RETURN_UNRESOLVED,
+        compilation.errors().firstOrNull()?.getMessage())
   }
 
   @Test
@@ -123,6 +127,7 @@ class ReturnTypeTest {
 
     assertEquals(Compilation.Status.FAILURE, compilation.status())
     assertEquals(1, compilation.errors().size)
-    assertEquals("${ErrorMessage.METHOD_RETURN_UNRESOLVED}: T", compilation.errors().firstOrNull()?.getMessage())
+    assertEquals("${ErrorMessage.METHOD_RETURN_UNRESOLVED}: T",
+        compilation.errors().firstOrNull()?.getMessage())
   }
 }
