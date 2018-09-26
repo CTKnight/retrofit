@@ -73,8 +73,8 @@ class RetrofitCheckProcessor : AbstractProcessor() {
     val methods = annotated
         .enclosedElements
         .asSequence()
-        .mapNotNull { element -> element as? ExecutableElement }
-        .filter { element -> !element.isDefault }
+        .mapNotNull { it as? ExecutableElement }
+        .filter { !it.isDefault }
         .toList()
 
     methods.forEach { validateMethod(it) }
