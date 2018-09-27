@@ -30,6 +30,11 @@
     </dependency>
     <!-- https://mvnrepository.com/artifact/com.google.auto.service/auto-service -->
     <dependency>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>animal-sniffer-annotations</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>com.google.auto.service</groupId>
       <artifactId>auto-service</artifactId>
       <version>1.0-rc1</version>
