@@ -69,3 +69,14 @@ a method has a return type of `void`.
       }
     }
     ```
+
+## Test
+
+all test cases in Retrofit should pass, in another word, the generated class should behave exactly 
+like what it used to be in Retrofit
+
+## Difficulties
+
+1. How to register adapters/converters
+
+    If it's done in runtime, the corresponding type check is then not available at compile time
