@@ -878,6 +878,88 @@ public final class RequestFactoryTest {
     assertThat(request.body()).isNull();
   }
 
+  @Test public void pathParametersAndPathTraversal() {
+    class Example {
+      @GET("/foo/bar/{ping}/") //
+      Call<ResponseBody> method(@Path(value = "ping") String ping) {
+        return null;
+      }
+    }
+
+    assertMalformedRequest(Example.class, ".");
+    assertMalformedRequest(Example.class, "..");
+
+    assertThat(buildRequest(Example.class, "./a").url().encodedPath())
+        .isEqualTo("/foo/bar/.%2Fa/");
+    assertThat(buildRequest(Example.class, "a/.").url().encodedPath())
+        .isEqualTo("/foo/bar/a%2F./");
+    assertThat(buildRequest(Example.class, "a/..").url().encodedPath())
+        .isEqualTo("/foo/bar/a%2F../");
+    assertThat(buildRequest(Example.class, "../a").url().encodedPath())
+        .isEqualTo("/foo/bar/..%2Fa/");
+    assertThat(buildRequest(Example.class, "..\\..").url().encodedPath())
+        .isEqualTo("/foo/bar/..%5C../");
+
+    assertThat(buildRequest(Example.class, "%2E").url().encodedPath())
+        .isEqualTo("/foo/bar/%252E/");
+    assertThat(buildRequest(Example.class, "%2E%2E").url().encodedPath())
+        .isEqualTo("/foo/bar/%252E%252E/");
+  }
+
+  @Test public void encodedPathParametersAndPathTraversal() {
+    class Example {
+      @GET("/foo/bar/{ping}/") //
+      Call<ResponseBody> method(@Path(value = "ping", encoded = true) String ping) {
+        return null;
+      }
+    }
+
+    assertMalformedRequest(Example.class, ".");
+    assertMalformedRequest(Example.class, "%2E");
+    assertMalformedRequest(Example.class, "%2e");
+    assertMalformedRequest(Example.class, "..");
+    assertMalformedRequest(Example.class, "%2E.");
+    assertMalformedRequest(Example.class, "%2e.");
+    assertMalformedRequest(Example.class, ".%2E");
+    assertMalformedRequest(Example.class, ".%2e");
+    assertMalformedRequest(Example.class, "%2E%2e");
+    assertMalformedRequest(Example.class, "%2e%2E");
+    assertMalformedRequest(Example.class, "./a");
+    assertMalformedRequest(Example.class, "a/.");
+    assertMalformedRequest(Example.class, "../a");
+    assertMalformedRequest(Example.class, "a/..");
+    assertMalformedRequest(Example.class, "a/../b");
+    assertMalformedRequest(Example.class, "a/%2e%2E/b");
+
+    assertThat(buildRequest(Example.class, "...").url().encodedPath())
+        .isEqualTo("/foo/bar/.../");
+    assertThat(buildRequest(Example.class, "a..b").url().encodedPath())
+        .isEqualTo("/foo/bar/a..b/");
+    assertThat(buildRequest(Example.class, "a..").url().encodedPath())
+        .isEqualTo("/foo/bar/a../");
+    assertThat(buildRequest(Example.class, "a..b").url().encodedPath())
+        .isEqualTo("/foo/bar/a..b/");
+    assertThat(buildRequest(Example.class, "..b").url().encodedPath())
+        .isEqualTo("/foo/bar/..b/");
+    assertThat(buildRequest(Example.class, "..\\..").url().encodedPath())
+        .isEqualTo("/foo/bar/..%5C../");
+  }
+
+  @Test public void dotDotsOkayWhenNotFullPathSegment() {
+    class Example {
+      @GET("/foo{ping}bar/") //
+      Call<ResponseBody> method(@Path(value = "ping", encoded = true) String ping) {
+        return null;
+      }
+    }
+
+    assertMalformedRequest(Example.class, "/./");
+    assertMalformedRequest(Example.class, "/../");
+
+    assertThat(buildRequest(Example.class, ".").url().encodedPath()).isEqualTo("/foo.bar/");
+    assertThat(buildRequest(Example.class, "..").url().encodedPath()).isEqualTo("/foo..bar/");
+  }
+
   @Test public void pathParamRequired() {
     class Example {
       @GET("/foo/bar/{ping}/") //
@@ -1635,6 +1717,8 @@ public final class RequestFactoryTest {
     assertThat(request.url().toString()).isEqualTo("http://example.com/foo/bar/");
 
     RequestBody body = request.body();
+    assertThat(body.contentType().toString()).startsWith("multipart/form-data; boundary=");
+
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
     String bodyString = buffer.readUtf8();
@@ -2234,7 +2318,9 @@ public final class RequestFactoryTest {
       }
     }
     Request request = buildRequest(Example.class, "bar", "pong");
-    assertBody(request.body(), "foo=bar&ping=pong");
+    RequestBody body = request.body();
+    assertBody(body, "foo=bar&ping=pong");
+    assertThat(body.contentType().toString()).isEqualTo("application/x-www-form-urlencoded");
   }
 
   @Test public void formEncodedWithEncodedNameFieldParam() {
@@ -2557,6 +2643,36 @@ public final class RequestFactoryTest {
     assertThat(request.body().contentType().toString()).isEqualTo("text/not-plain");
   }
 
+  @Test public void contentTypeAnnotationHeaderOverridesFormEncoding() {
+    class Example {
+      @FormUrlEncoded //
+      @POST("/foo") //
+      @Headers("Content-Type: text/not-plain") //
+      Call<ResponseBody> method(@Field("foo") String foo, @Field("ping") String ping) {
+        return null;
+      }
+    }
+    Request request = buildRequest(Example.class, "bar", "pong");
+    assertThat(request.body().contentType().toString()).isEqualTo("text/not-plain");
+  }
+
+  @Test public void contentTypeAnnotationHeaderOverridesMultipart() {
+    class Example {
+      @Multipart //
+      @POST("/foo/bar/") //
+      @Headers("Content-Type: text/not-plain") //
+      Call<ResponseBody> method(@Part("ping") String ping, @Part("kit") RequestBody kit) {
+        return null;
+      }
+    }
+
+    Request request = buildRequest(Example.class, "pong", RequestBody.create(
+        TEXT_PLAIN, "kat"));
+
+    RequestBody body = request.body();
+    assertThat(request.body().contentType().toString()).isEqualTo("text/not-plain");
+  }
+
   @Test public void malformedContentTypeHeaderThrows() {
     class Example {
       @POST("/") //
@@ -2782,5 +2898,13 @@ public final class RequestFactoryTest {
         .addConverterFactory(new ToStringConverterFactory());
 
     return buildRequest(cls, retrofitBuilder, args);
+  }
+
+  static void assertMalformedRequest(Class<?> cls, Object... args) {
+    try {
+      Request request = buildRequest(cls, args);
+      fail("expected a malformed request but was " + request);
+    } catch (IllegalArgumentException expected) {
+    }
   }
 }

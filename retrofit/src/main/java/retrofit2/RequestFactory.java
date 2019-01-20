@@ -21,7 +21,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -63,17 +65,19 @@ final class RequestFactory {
     return new Builder(retrofit, method).build();
   }
 
+  private final Method method;
   private final HttpUrl baseUrl;
   final String httpMethod;
-  private final String relativeUrl;
-  private final Headers headers;
-  private final MediaType contentType;
+  private final @Nullable String relativeUrl;
+  private final @Nullable Headers headers;
+  private final @Nullable MediaType contentType;
   private final boolean hasBody;
   private final boolean isFormEncoded;
   private final boolean isMultipart;
   private final ParameterHandler<?>[] parameterHandlers;
 
   RequestFactory(Builder builder) {
+    method = builder.method;
     baseUrl = builder.retrofit.baseUrl;
     httpMethod = builder.httpMethod;
     relativeUrl = builder.relativeUrl;
@@ -85,24 +89,28 @@ final class RequestFactory {
     parameterHandlers = builder.parameterHandlers;
   }
 
-  okhttp3.Request create(@Nullable Object[] args) throws IOException {
-    RequestBuilder requestBuilder = new RequestBuilder(httpMethod, baseUrl, relativeUrl, headers,
-        contentType, hasBody, isFormEncoded, isMultipart);
-
+  okhttp3.Request create(Object[] args) throws IOException {
     @SuppressWarnings("unchecked") // It is an error to invoke a method with the wrong arg types.
     ParameterHandler<Object>[] handlers = (ParameterHandler<Object>[]) parameterHandlers;
 
-    int argumentCount = args != null ? args.length : 0;
+    int argumentCount = args.length;
     if (argumentCount != handlers.length) {
       throw new IllegalArgumentException("Argument count (" + argumentCount
           + ") doesn't match expected count (" + handlers.length + ")");
     }
 
+    RequestBuilder requestBuilder = new RequestBuilder(httpMethod, baseUrl, relativeUrl,
+        headers, contentType, hasBody, isFormEncoded, isMultipart);
+
+    List<Object> argumentList = new ArrayList<>(argumentCount);
     for (int p = 0; p < argumentCount; p++) {
+      argumentList.add(args[p]);
       handlers[p].apply(requestBuilder, args[p]);
     }
 
-    return requestBuilder.build();
+    return requestBuilder.get()
+        .tag(Invocation.class, new Invocation(method, argumentList))
+        .build();
   }
 
   /**
@@ -130,15 +138,15 @@ final class RequestFactory {
     boolean gotQueryName;
     boolean gotQueryMap;
     boolean gotUrl;
-    String httpMethod;
+    @Nullable String httpMethod;
     boolean hasBody;
     boolean isFormEncoded;
     boolean isMultipart;
-    String relativeUrl;
-    Headers headers;
-    MediaType contentType;
-    Set<String> relativeUrlParamNames;
-    ParameterHandler<?>[] parameterHandlers;
+    @Nullable String relativeUrl;
+    @Nullable Headers headers;
+    @Nullable MediaType contentType;
+    @Nullable Set<String> relativeUrlParamNames;
+    @Nullable ParameterHandler<?>[] parameterHandlers;
 
     Builder(Retrofit retrofit, Method method) {
       this.retrofit = retrofit;
@@ -306,6 +314,7 @@ final class RequestFactory {
       return result;
     }
 
+    @Nullable
     private ParameterHandler<?> parseParameterAnnotation(
         int p, Type type, Annotation[] annotations, Annotation annotation) {
       if (annotation instanceof Url) {
