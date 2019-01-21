@@ -1,13 +1,11 @@
 package retrofit2
 
-import com.google.auto.common.MoreElements
 import com.google.auto.service.AutoService
 import com.squareup.javapoet.ArrayTypeName
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeVariableName
 import com.squareup.javapoet.WildcardTypeName
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import retrofit2.http.DELETE
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
@@ -28,10 +26,11 @@ import javax.annotation.processing.ProcessingEnvironment
 import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
-import javax.lang.model.element.AnnotationMirror
+import javax.lang.model.element.Element
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
+import javax.lang.model.element.VariableElement
 
 @AutoService(Processor::class)
 class RetrofitCheckProcessor : AbstractProcessor() {
@@ -81,14 +80,28 @@ class RetrofitCheckProcessor : AbstractProcessor() {
     methods.forEach { validateMethod(it) }
   }
 
-  private fun validateMethod(element: ExecutableElement) {
-    val returnType = element.returnType
+  private fun validateMethod(methodElement: ExecutableElement) {
+    val returnType = methodElement.returnType
     val returnTypeName = TypeName.get(returnType)
-    validReturnType(returnTypeName, element)
-    validateMethodAnnotations(element)
+    val parameterTypes = methodElement.parameters
+
+    validateReturnType(methodElement, returnTypeName)
+//    validateParameterTypes(methodElement, parameterTypes)
+    validateMethodAnnotations(methodElement, parameterTypes)
   }
 
-  private fun validateMethodAnnotations(element: ExecutableElement) {
+  private fun validateParameterTypes(
+    methodElement: ExecutableElement,
+    parameterTypes: List<VariableElement>
+  ) {
+    TODO(
+        "not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  private fun validateMethodAnnotations(
+    element: ExecutableElement,
+    parameters: List<VariableElement>
+  ) {
     val annotations = element.annotationMirrors
     annotations.forEach {
       val typeName = TypeName.get(it.annotationType)
@@ -118,26 +131,43 @@ class RetrofitCheckProcessor : AbstractProcessor() {
     }
   }
 
-  private fun validReturnType(returnTypeName: TypeName, element: ExecutableElement) {
-    when (returnTypeName) {
+  private fun validateReturnType(element: ExecutableElement, typeName: TypeName) {
+    when (typeName) {
       TypeName.VOID -> {
         processingEnvironment.error(element, ErrorMessage.METHOD_RETURN_VOID)
       }
+      else -> {
+        containsUnresolvedType(element, typeName)
+      }
+    }
+    // TODO: use retrofit instance to check return types with call adapters and converters
+  }
+
+  private fun containsUnresolvedType(
+    element: Element,
+    typeName: TypeName,
+    recursiveLevel: Int = 0
+  ) {
+    if (recursiveLevel > 100) {
+//      Wow, impressive nested type!
+      TODO("Place a Warning here to notify users we give up checking this deep nested type")
+    }
+
+    when (typeName) {
       is TypeVariableName -> {
         processingEnvironment.error(element,
-            "${ErrorMessage.METHOD_RETURN_UNRESOLVED}: ${returnTypeName.name}")
+            "${ErrorMessage.METHOD_RETURN_UNRESOLVED}: ${typeName.name}")
       }
       is WildcardTypeName -> {
         processingEnvironment.error(element,
             ErrorMessage.METHOD_RETURN_UNRESOLVED)
       }
-      is ArrayTypeName -> {
-        validReturnType(returnTypeName.componentType, element)
-      }
-      is ParameterizedTypeName -> {
-        returnTypeName.typeArguments.forEach { validReturnType(it, element) }
-      }
+      is ArrayTypeName ->
+        containsUnresolvedType(element, typeName.componentType, recursiveLevel + 1)
+      is ParameterizedTypeName ->
+        typeName.typeArguments.forEach {
+          containsUnresolvedType(element, it, recursiveLevel + 1)
+        }
     }
-    // TODO: use retrofit instance to check return types with call adapters and converters
   }
 }
