@@ -2,26 +2,30 @@ package retrofit2.processors
 
 import com.google.testing.compile.Compilation
 import com.google.testing.compile.JavaFileObjects
+import org.intellij.lang.annotations.Language
 import org.junit.Test
 import kotlin.test.assertEquals
 
 class ReturnTypeTest {
   @Test
   fun typeVariableTest() {
-    val compilation = compiler().compile(JavaFileObjects.forSourceLines(
-        "retrofit2.processors.returntype.TypeVariable",
+    @Language("JAVA") val TEST_SRC =
         """
-        package retrofit2.processors.returntype;
+        package retrofit2.processors.test.type.response;
 
         import retrofit2.Call;
         import retrofit2.http.GET;
         import retrofit2.processors.RetrofitService;
 
         @RetrofitService
-        public interface TypeVariable {
+        public interface UnresolvableParameterType {
           @GET("/") <T> Call<T> typeVariable();
         }
-        """
+        """.trimIndent()
+
+    val compilation = compiler().compile(JavaFileObjects.forSourceLines(
+        "retrofit2.processors.test.type.response.UnresolvableParameterType",
+        TEST_SRC
     ))
 
     assertEquals(Compilation.Status.FAILURE, compilation.status())
@@ -32,10 +36,9 @@ class ReturnTypeTest {
 
   @Test
   fun typeVariableUpperBoundTest() {
-    val compilation = compiler().compile(JavaFileObjects.forSourceLines(
-        "retrofit2.processors.returntype.TypeVariableUpperBound",
+    @Language("JAVA") val TEST_SRC =
         """
-        package retrofit2.processors.returntype;
+        package retrofit2.processors.test.type.response;
 
         import okhttp3.ResponseBody;
         import retrofit2.Call;
@@ -46,7 +49,11 @@ class ReturnTypeTest {
         public interface TypeVariableUpperBound {
           @GET("/") <T extends ResponseBody> Call<T> typeVariableUpperBound();
         }
-        """
+        """.trimIndent()
+
+    val compilation = compiler().compile(JavaFileObjects.forSourceLines(
+        "retrofit2.processors.test.type.response.TypeVariableUpperBound",
+        TEST_SRC
     ))
 
     assertEquals(Compilation.Status.FAILURE, compilation.status())
@@ -57,10 +64,9 @@ class ReturnTypeTest {
 
   @Test
   fun wildcardTest() {
-    val compilation = compiler().compile(JavaFileObjects.forSourceLines(
-        "retrofit2.processors.returntype.Wildcard",
+    @Language("JAVA") val TEST_SRC =
         """
-        package retrofit2.processors.returntype;
+        package retrofit2.processors.test.type.response;
 
         import retrofit2.Call;
         import retrofit2.http.GET;
@@ -70,7 +76,11 @@ class ReturnTypeTest {
         public interface Wildcard {
           @GET("/") Call<?> wildcard();
         }
-        """
+        """.trimIndent()
+
+    val compilation = compiler().compile(JavaFileObjects.forSourceLines(
+        "retrofit2.processors.test.type.response.Wildcard",
+        TEST_SRC
     ))
 
     assertEquals(Compilation.Status.FAILURE, compilation.status())
@@ -81,10 +91,9 @@ class ReturnTypeTest {
 
   @Test
   fun wildcardUpperBoundTest() {
-    val compilation = compiler().compile(JavaFileObjects.forSourceLines(
-        "retrofit2.processors.returntype.WildcardUpperBound",
+    @Language("JAVA") val TEST_SRC =
         """
-        package retrofit2.processors.returntype;
+        package retrofit2.processors.test.type.response;
 
         import okhttp3.ResponseBody;
         import retrofit2.Call;
@@ -95,7 +104,11 @@ class ReturnTypeTest {
         public interface WildcardUpperBound {
           @GET("/") Call<? extends ResponseBody> wildcardUpperBound();
         }
-        """
+        """.trimIndent()
+
+    val compilation = compiler().compile(JavaFileObjects.forSourceLines(
+        "retrofit2.processors.test.type.response.WildcardUpperBound",
+        TEST_SRC
     ))
 
     assertEquals(Compilation.Status.FAILURE, compilation.status())
@@ -106,10 +119,9 @@ class ReturnTypeTest {
 
   @Test
   fun nestedTypeVariableTest() {
-    val compilation = compiler().compile(JavaFileObjects.forSourceLines(
-        "retrofit2.processors.returntype.NestedTypeVariable",
+    @Language("JAVA") val TEST_SRC =
         """
-        package retrofit2.processors.returntype;
+        package retrofit2.processors.test.type.response;
 
         import java.util.List;
         import java.util.Map;
@@ -123,6 +135,10 @@ class ReturnTypeTest {
           @GET("/") <T> Call<List<Map<String, Set<T[]>>>> crazy();
         }
         """
+
+    val compilation = compiler().compile(JavaFileObjects.forSourceLines(
+        "retrofit2.processors.test.type.response.NestedTypeVariable",
+        TEST_SRC
     ))
 
     assertEquals(Compilation.Status.FAILURE, compilation.status())

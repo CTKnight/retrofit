@@ -2,8 +2,8 @@ package retrofit2.processors
 
 import com.google.testing.compile.Compilation
 import com.google.testing.compile.JavaFileObjects
+import org.intellij.lang.annotations.Language
 import org.junit.Test
-import java.util.Locale
 import javax.tools.JavaFileObject
 import kotlin.test.assertEquals
 
@@ -11,51 +11,64 @@ class TargetTypeTest {
 
   @Test
   fun extendedInterfaceTest() {
-    val javaFileObject = JavaFileObjects.forSourceLines(
-        "retrofit2.processors.ExtendedInterface",
+    @Language("JAVA") val TEST_SRC =
         """
-        package retrofit2.processors;
+        package retrofit2.processors.test.type.target;
+
+        import retrofit2.processors.RetrofitService;
+        import retrofit2.processors.SampleService;
 
         @RetrofitService
         public interface ExtendedInterface extends SampleService {
         }
-        """
+        """.trimIndent()
+
+    val javaFileObject = JavaFileObjects.forSourceLines(
+        "retrofit2.processors.test.type.target.ExtendedInterface",
+        TEST_SRC
     )
     val compilation = compiler().compile(javaFileObject)
-
 
     assertEquals(1, compilation.errors().size)
     val onlyError = compilation.errors().firstOrNull()
     assertEquals(ErrorMessage.TOO_MUCH_INTERFACE,
-        onlyError?.getMessage(Locale.getDefault()))
+        onlyError?.getMessage())
   }
 
   @Test
   fun abstractClassTest() {
-    val javaFileObject = JavaFileObjects.forSourceLines(
-        "retrofit2.processors.SampleAbstractClass",
+    @Language("JAVA") val TEST_SRC =
         """
-            package retrofit2.processors;
+        package retrofit2.processors.test.type.target;
 
-            @RetrofitService
-            public abstract class SampleAbstractClass {
-            }
-            """
+        import retrofit2.processors.RetrofitService;
+
+        @RetrofitService
+        public abstract class SampleAbstractClass {
+        }
+        """.trimIndent()
+    val javaFileObject = JavaFileObjects.forSourceLines(
+        "retrofit2.processors.test.type.target.SampleAbstractClass",
+        TEST_SRC
     )
     invalidTypeTest(javaFileObject)
   }
 
   @Test
   fun classTest() {
-    val javaFileObject = JavaFileObjects.forSourceLines(
-        "retrofit2.processors.SampleClass",
+    @Language("JAVA") val TEST_SRC =
         """
-        package retrofit2.processors;
+        package retrofit2.processors.test.type.target;
+
+        import retrofit2.processors.RetrofitService;
 
         @RetrofitService
         public class SampleClass {
         }
-        """
+        """.trimIndent()
+    val javaFileObject = JavaFileObjects.forSourceLines(
+        "retrofit2.processors.test.type.target.SampleClass",
+        TEST_SRC
     )
     invalidTypeTest(javaFileObject)
   }
@@ -67,6 +80,6 @@ class TargetTypeTest {
     assertEquals(Compilation.Status.FAILURE, compilation.status())
     assertEquals(1, compilation.errors().size)
     val onlyWarning = compilation.errors().firstOrNull()
-    assertEquals(ErrorMessage.INVALID_TYPE, onlyWarning?.getMessage(Locale.getDefault()))
+    assertEquals(ErrorMessage.INVALID_TYPE, onlyWarning?.getMessage())
   }
 }
