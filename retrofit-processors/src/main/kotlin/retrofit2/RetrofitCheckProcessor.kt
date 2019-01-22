@@ -86,7 +86,7 @@ class RetrofitCheckProcessor : AbstractProcessor() {
     val parameterTypes = methodElement.parameters
 
     validateReturnType(methodElement, returnTypeName)
-//    validateParameterTypes(methodElement, parameterTypes)
+    validateParameterTypes(methodElement, parameterTypes)
     validateMethodAnnotations(methodElement, parameterTypes)
   }
 
@@ -94,8 +94,10 @@ class RetrofitCheckProcessor : AbstractProcessor() {
     methodElement: ExecutableElement,
     parameterTypes: List<VariableElement>
   ) {
-    TODO(
-        "not implemented") //To change body of created functions use File | Settings | File Templates.
+    parameterTypes.forEach {
+      val typeName = TypeName.get(it.asType())
+      checkUnresolvedType(it, typeName)
+    }
   }
 
   private fun validateMethodAnnotations(
@@ -137,13 +139,13 @@ class RetrofitCheckProcessor : AbstractProcessor() {
         processingEnvironment.error(element, ErrorMessage.METHOD_RETURN_VOID)
       }
       else -> {
-        containsUnresolvedType(element, typeName)
+        checkUnresolvedType(element, typeName)
       }
     }
     // TODO: use retrofit instance to check return types with call adapters and converters
   }
 
-  private fun containsUnresolvedType(
+  private fun checkUnresolvedType(
     element: Element,
     typeName: TypeName,
     recursiveLevel: Int = 0
@@ -156,17 +158,27 @@ class RetrofitCheckProcessor : AbstractProcessor() {
     when (typeName) {
       is TypeVariableName -> {
         processingEnvironment.error(element,
-            "${ErrorMessage.METHOD_RETURN_UNRESOLVED}: ${typeName.name}")
+            "${
+            if (element is ExecutableElement)
+              ErrorMessage.METHOD_RETURN_UNRESOLVED
+            else
+              ErrorMessage.METHOD_PARAMETER_UNRESOLVED
+            }: ${typeName.name}")
       }
       is WildcardTypeName -> {
         processingEnvironment.error(element,
-            ErrorMessage.METHOD_RETURN_UNRESOLVED)
+            if (element is ExecutableElement)
+              ErrorMessage.METHOD_RETURN_UNRESOLVED
+            else
+              ErrorMessage.METHOD_PARAMETER_UNRESOLVED
+        )
+
       }
       is ArrayTypeName ->
-        containsUnresolvedType(element, typeName.componentType, recursiveLevel + 1)
+        checkUnresolvedType(element, typeName.componentType, recursiveLevel + 1)
       is ParameterizedTypeName ->
         typeName.typeArguments.forEach {
-          containsUnresolvedType(element, it, recursiveLevel + 1)
+          checkUnresolvedType(element, it, recursiveLevel + 1)
         }
     }
   }
